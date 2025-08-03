@@ -6,7 +6,7 @@
 :local baseInterface [:pick $comment 4 11]
 :local enablePPPoEServer [:tonum [:pick $comment 12 13]]
 
-:put "Lines: $totalLines | 🔌 Base Interface: $baseInterface | 🖥 PPPoE Server: $enablePPPoEServer"
+:put "Lines: $totalLines | Base Interface: $baseInterface | 🖥 PPPoE Server: $enablePPPoEServer"
 
 # === Create WAN interface list ===
 /interface list
