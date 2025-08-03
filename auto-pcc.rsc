@@ -1,4 +1,4 @@
-:put "📡 MikroTik Auto PCC + MAC VLAN + Optional PPPoE Server Setup 🚀"
+:put "MikroTik Auto PCC + MAC VLAN + Optional PPPoE Server Setup"
 
 # === Input Parsing ===
 :local input [/user get admin comment]
@@ -6,7 +6,7 @@
 :local baseInterface [:pick $input 4 11]
 :local enablePPPoEServer [:toint [:pick $input 12 13]]
 
-:put "🔢 Lines: $totalLines | 🧩 Base Interface: $baseInterface | 🖥 PPPoE Server: $enablePPPoEServer"
+:put "Lines: $totalLines | Base Interface: $baseInterface | 🖥 PPPoE Server: $enablePPPoEServer"
 
 # === Create Interface List WAN ===
 /interface list
@@ -73,7 +73,7 @@ add chain=srcnat out-interface-list=WAN action=masquerade comment="Masquerade vi
 
   /ip firewall address-list
   add list=pppoe-clients address=192.168.77.0/24 comment="PPPoE Pool"
-  :put "✅ PPPoE Server Setup Complete!"
+  :put "PPPoE Server Setup Complete!"
 }
 
 :put "✅ PCC Load Balancing with MAC VLAN + Interface List + Masquerade Done!"
