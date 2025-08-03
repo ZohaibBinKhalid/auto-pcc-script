@@ -1,8 +1,11 @@
 # 🔄 Default fallbacks
-:if ([:typeof $pppoeInterface] = "nothing") do={ :set pppoeInterface "ether2" }
-:if ([:typeof $macVlanInterface] = "nothing") do={ :set macVlanInterface "ether2" }
-:if ([:typeof $totalLines] = "nothing") do={ :set totalLines 10 }
-:if ([:typeof $profileCount] = "nothing") do={ :set profileCount 5 }
+# === EDIT THESE VARIABLES BEFORE RUNNING ===
+:global totalLines 5
+:global baseInterface "ether2"
+:global enablePPPoEServer true
+:global pppoeServerInterface "ether3"
+:global profilesCount 3
+
 
 # 🛠 Create MAC VLAN interfaces
 :for i from=1 to=$totalLines do={
