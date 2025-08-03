@@ -1,74 +1,49 @@
-:put "MikroTik PCC + MAC VLAN + Optional PPPoE Server Setup"
+# 🔄 Default fallbacks
+:if ([:typeof $pppoeInterface] = "nothing") do={ :set pppoeInterface "ether2" }
+:if ([:typeof $macVlanInterface] = "nothing") do={ :set macVlanInterface "ether2" }
+:if ([:typeof $totalLines] = "nothing") do={ :set totalLines 10 }
+:if ([:typeof $profileCount] = "nothing") do={ :set profileCount 5 }
 
-# === Read user input from comment ===
-:local comment [/user get admin comment]
-:local totalLines [:tonum [:pick $comment 0 3]]
-:local baseInterface [:pick $comment 4 11]
-:local enablePPPoEServer [:tonum [:pick $comment 12 13]]
-
-:put "Lines: $totalLines | Base Interface: $baseInterface | 🖥 PPPoE Server: $enablePPPoEServer"
-
-# === Create WAN interface list ===
-/interface list
-:if ([:len [/interface list find name="WAN"]] = 0) do={
-    add name=WAN comment="WAN Interfaces for PCC"
-}
-/interface list member remove [find list=WAN]
-
-# === Loop: Create MAC VLANs + PPPoE Clients + add to WAN list ===
+# 🛠 Create MAC VLAN interfaces
 :for i from=1 to=$totalLines do={
-
-    :local vlanName ("macvlan" . $i)
-    :local pppoeName ("pppoe-out" . $i)
-    :local vlanID $i
-
-    /interface vlan add name=$vlanName interface=$baseInterface vlan-id=$vlanID
-    /interface pppoe-client add name=$pppoeName interface=$vlanName user=("pppoeuser" . $i) password=("password" . $i) use-peer-dns=no add-default-route=no disabled=no
-    /interface list member add list=WAN interface=$pppoeName
+    /interface vlan add name=("macvlan" . $i) interface=$macVlanInterface vlan-id=$i
 }
 
-# === Accept WAN traffic in Mangle (top position) ===
-/ip firewall mangle
-add chain=prerouting in-interface-list=WAN action=accept place-before=0 comment="Accept WAN Traffic"
-
-# === Loop: PCC Mangle Rules ===
+# 🌐 Create PPPoE Clients
 :for i from=1 to=$totalLines do={
-    :local connMark ("wan" . $i . "-conn")
-    :local routeMark ("to-wan" . $i)
-    /ip firewall mangle add chain=prerouting in-interface=$baseInterface connection-mark=no-mark action=mark-connection new-connection-mark=$connMark per-connection-classifier=both-addresses-and-ports:$totalLines,($i - 1) passthrough=yes
-    /ip firewall mangle add chain=prerouting in-interface=$baseInterface connection-mark=$connMark action=mark-routing new-routing-mark=$routeMark passthrough=yes
+    /interface pppoe-client add name=("pppoe-out" . $i) interface=("macvlan" . $i) user=("user" . $i) password="123" add-default-route=no use-peer-dns=no disabled=no
 }
 
-# === Loop: Routing Rules ===
+# 📦 Interface List: WAN
+/interface list add name=WAN
 :for i from=1 to=$totalLines do={
-    :local pppoeName ("pppoe-out" . $i)
-    :local routeMark ("to-wan" . $i)
-    /ip route add gateway=$pppoeName routing-mark=$routeMark check-gateway=ping
+    /interface list member add interface=("pppoe-out" . $i) list=WAN
 }
 
-# === NAT Masquerade Rule ===
-/ip firewall nat add chain=srcnat out-interface-list=WAN action=masquerade comment="Masquerade WAN"
+# 🔄 Mangle Accept Rule First
+/ip firewall mangle add chain=prerouting action=accept in-interface-list=WAN place-before=0
 
-# === Optional PPPoE Server Setup ===
-:if ($enablePPPoEServer = 1) do={
+# 🔥 NAT Masquerade
+/ip firewall nat add action=masquerade chain=srcnat out-interface-list=WAN
 
-    /ip pool add name=pppoe-pool ranges=192.168.77.2-192.168.77.254
-    /ip address add address=192.168.77.1/24 interface=$baseInterface
-
-    /ppp profile
-    add name=5Mbps local-address=192.168.77.1 remote-address=pppoe-pool rate-limit=5M/5M
-    add name=10Mbps local-address=192.168.77.1 remote-address=pppoe-pool rate-limit=10M/10M
-
-    /ppp secret
-    add name=user1 password=123 service=pppoe profile=5Mbps
-    add name=user2 password=123 service=pppoe profile=10Mbps
-
-    /interface pppoe-server server
-    add interface=$baseInterface service-name=pppoe disabled=no
-
-    /ip firewall address-list
-    add list=pppoe-clients address=192.168.77.0/24 comment="PPPoE Pool"
-    :put "PPPoE Server Setup Complete"
+# 🧠 PCC Load Balancing
+:for i from=1 to=$totalLines do={
+    /routing table add name=("toLine" . $i)
+/ip firewall mangle add chain=prerouting dst-address-type=!local in-interface-list=LAN connection-mark=no-mark action=mark-connection new-connection-mark=("conn" . $i) passthrough=yes per-connection-classifier=("both-addresses-and-ports:" . $totalLines . "/" . ($i - 1))
+/ip firewall mangle add chain=prerouting connection-mark=("conn" . $i) action=mark-routing new-routing-mark=("toLine" . $i) passthrough=yes
+/routing rule add src-address=192.168.50.0/24 action=lookup-only-in-table table=("toLine" . $i)
+/ip route add dst-address=0.0.0.0/0 gateway=("pppoe-out" . $i) routing-table=("toLine" . $i)
 }
 
-:put "ALL DONE: PCC + MAC VLANs + Optional PPPoE Server"
+# 🛡️ PPPoE Server Setup (optional)
+/interface pppoe-server server add interface=$pppoeInterface service-name="pppoe" disabled=no default-profile="default"
+
+/ip pool add name=pppoe-pool ranges=192.168.88.10-192.168.88.200
+/ppp profile add name="default" local-address=192.168.88.1 remote-address=pppoe-pool use-mpls=no use-compression=no use-encryption=no only-one=yes
+
+# 👥 Create User Secrets
+:for i from=1 to=$profileCount do={
+    :local rate ($i * 5) . "M"
+    /ppp profile add name=("LB" . $rate) rate-limit=($rate . "/" . $rate) local-address=192.168.88.1 remote-address=pppoe-pool
+    /ppp secret add name=("user" . $i) password="123" profile=("LB" . $rate) service=pppoe
+}
