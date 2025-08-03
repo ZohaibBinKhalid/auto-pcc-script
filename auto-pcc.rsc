@@ -32,8 +32,8 @@
 # 🧠 PCC Load Balancing
 :for i from=1 to=$totalLines do={
     /routing table add name=("toLine" . $i)
-/ip firewall mangle add chain=prerouting dst-address-type=!local in-interface-list=LAN connection-mark=no-mark action=mark-connection new-connection-mark=("conn" . $i) passthrough=yes per-connection-classifier=("both-addresses-and-ports:" . $totalLines . "/" . ($i - 1))
-/ip firewall mangle add chain=prerouting connection-mark=("conn" . $i) action=mark-routing new-routing-mark=("toLine" . $i) passthrough=yes
+/ip firewall mangle add chain=prerouting dst-address-type=!local src-address-list=pppoe connection-mark=no-mark action=mark-connection new-connection-mark=("conn" . $i) passthrough=yes per-connection-classifier=("both-addresses-and-ports:" . $totalLines . "/" . ($i - 1))
+/ip firewall mangle add chain=prerouting src-address-list=pppoe connection-mark=("conn" . $i) action=mark-routing new-routing-mark=("toLine" . $i) passthrough=yes
 /routing rule add src-address=192.168.50.0/24 action=lookup-only-in-table table=("toLine" . $i)
 /ip route add dst-address=0.0.0.0/0 gateway=("pppoe-out" . $i) routing-table=("toLine" . $i)
 }
