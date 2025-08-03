@@ -55,3 +55,5 @@
 
 # Add client IP range to address list (adjust as needed)
 /ip firewall address-list add list=pppoe-clients address=192.168.77.0/24 comment="PPPoE Clients"
+
+file/ remove auto-pcc.rsc
