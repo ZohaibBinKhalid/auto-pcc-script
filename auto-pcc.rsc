@@ -3,7 +3,7 @@
 :global totalLines 5
 :global baseInterface "ether2"
 :global enablePPPoEServer true
-:global pppoeServerInterface "ether3"
+:global pppoeServerInterface "ether1"
 :global profilesCount 3
 
 
