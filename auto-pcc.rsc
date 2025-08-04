@@ -1,30 +1,78 @@
-# Step 1: Base64-encoded script
-:local encodedScript "
-IyBVc2VyIElucHV0DQo6bG9jYWwgdG90YWxMaW5lcyAiIg0KOmxvY2FsIGJhc2VJbnRlcmZhY2Ug
-IiINCjpsb2NhbCByZWFkaW5wdXQgZG89ezpyZXR1cm59DQoNCi9wdXQgIlxuPz8gRW50ZXIgbnVt
-YmVyIG9mIGxpbmVzOiINCjpzZXQgdG90YWxMaW5lcyBbJHJlYWRpbnB1dF0NCg0KL3B1dCAiXG4/
-PyBFbnRlciBiYXNlIGludGVyZmFjZSAoZS5nLiwgZXRoZXIyKToiDQovc2V0IGJhc2VJbnRlcmZh
-Y2UgWyRyZWFkaW5wdXRdDQo=  ; <<=== SHORTENED EXAMPLE, use full encoded script here
-"
+# User Input
+:local totalLines ""
+:local baseInterface ""
+:local readinput do={:return}
 
-# Step 2: Decode using fetch with output=user
-:local decodedFileName "auto-pcc-decoded.rsc"
-/file remove [find name=$decodedFileName]
+/put "\n?? Enter number of lines:"
+:set totalLines [$readinput]
 
-:local result [/tool fetch url=("data:application/octet-stream;base64," . $encodedScript) mode=https output=user as-value]
-:local content ($result->"data")
+/put "\n?? Enter base interface (e.g., ether2):"
+/set baseInterface [$readinput]
 
-/file print file=$decodedFileName
+# Create WAN interface list if not exist
+:if ([:len [/interface list find name="WAN"]] = 0) do={
+    /interface list add name="WAN" comment="WAN Interfaces for PCC"
+}
+
+# Create Routing Tables First
+:for i from=1 to=$totalLines do={
+    :local rtname ("to-wan" . $i)
+    :if ([:len [/routing table find name=$rtname]] = 0) do={
+        /routing table add name=$rtname fib
+    }
+}
+
+# Step 1: Create all MAC VLANs, PPPoE clients, add to WAN list
+:for i from=1 to=$totalLines do={
+
+    :local vlanName ("macvlan" . $i)
+    :local pppoeName ("pppoe-out" . $i)
+    :local username ("pppoeuser" . $i)
+    :local password ("password" . $i)
+
+    /interface macvlan add name=$vlanName interface=$baseInterface mode=private
+    /interface pppoe-client add name=$pppoeName interface=$vlanName user=$username password=$password use-peer-dns=no add-default-route=no disabled=no
+    /interface list member add list=WAN interface=$pppoeName
+}
+
+# Step 2: Create all connection-marks
+:for i from=1 to=$totalLines do={
+
+    :local connmark ("wan" . $i . "-conn")
+    :local index ($i - 1)
+
+    /ip firewall mangle add chain=prerouting src-address-list=pppoe-clients connection-mark=no-mark \
+        action=mark-connection new-connection-mark=$connmark \
+        per-connection-classifier=("both-addresses-and-ports:" . $totalLines . "/" . $index) passthrough=yes
+}
+
+# Step 3: Create all routing-marks and routes
+:for i from=1 to=$totalLines do={
+
+    :local pppoeName ("pppoe-out" . $i)
+    :local rtmark ("to-wan" . $i)
+    :local connmark ("wan" . $i . "-conn")
+
+    /ip firewall mangle add chain=prerouting connection-mark=$connmark src-address-list=pppoe-clients \
+        action=mark-routing new-routing-mark=$rtmark passthrough=yes
+
+    /ip route add dst-address=0.0.0.0/0 gateway=$pppoeName routing-table=$rtmark check-gateway=ping
+}
+
+# WAN Accept Rule (for load balancing return traffic)
+/ip firewall mangle add chain=prerouting in-interface-list=WAN action=accept comment="Accept WAN"
+
+# NAT Masquerade
+/ip firewall nat add chain=srcnat out-interface-list=WAN action=masquerade comment="Masquerade all WANs"
+
+# Add clients to address list (update range if needed)
+/ip firewall address-list add list=pppoe-clients address=192.168.77.0/24 comment="PPPoE Clients"
+
+# Step 4: Show Success Message
 :delay 1
-/file set [find name=$decodedFileName] contents=$content
+/put "\n? Successfully installed auto PCC script!"
 
-# Step 3: Import the script
-/import file-name=$decodedFileName
-
-# Step 4: Success message
-:delay 1
-/put "\n Script installed successfully!"
-
-# Step 5: Cleanup
+# Step 5: Delete script file after execution
 :delay 2
-/file remove [find name=$decodedFileName]
+:local scriptFileName "auto-pcc.rsc"
+/file remove [find name=$scriptFileName]
