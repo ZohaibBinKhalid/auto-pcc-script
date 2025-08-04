@@ -41,7 +41,7 @@
     :local connmark ("wan" . $i . "-conn")
     :local index ($i - 1)
 
-    /ip firewall mangle add chain=prerouting src-address-list=pppoe-clients connection-mark=no-mark \
+    /ip firewall mangle add chain=prerouting src-address-list=clients connection-mark=no-mark \
         action=mark-connection new-connection-mark=$connmark \
         per-connection-classifier=("both-addresses-and-ports:" . $totalLines . "/" . $index) passthrough=yes
 }
@@ -53,20 +53,20 @@
     :local rtmark ("to-wan" . $i)
     :local connmark ("wan" . $i . "-conn")
 
-    /ip firewall mangle add chain=prerouting connection-mark=$connmark src-address-list=pppoe-clients \
+    /ip firewall mangle add chain=prerouting connection-mark=$connmark src-address-list=clients \
         action=mark-routing new-routing-mark=$rtmark passthrough=yes
 
     /ip route add dst-address=0.0.0.0/0 gateway=$pppoeName routing-table=$rtmark check-gateway=ping
 }
 
 # WAN Accept Rule (for load balancing return traffic)
-/ip firewall mangle add chain=prerouting in-interface-list=WAN action=accept comment="Accept WAN"
+/ip firewall mangle add chain=prerouting in-interface-list=WAN place-before=0 action=accept comment="Accept WAN"
 
 # NAT Masquerade
 /ip firewall nat add chain=srcnat out-interface-list=WAN action=masquerade comment="Masquerade all WANs"
 
 # Add clients to address list (update range if needed)
-/ip firewall address-list add list=pppoe-clients address=192.168.77.0/24 comment="PPPoE Clients"
+/ip firewall address-list add list=clients address=192.168.77.0/24 comment="Clients"
 
 # Step 4: Show Success Message
 :delay 1
