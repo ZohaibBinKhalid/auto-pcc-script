@@ -56,7 +56,8 @@
     /ip firewall mangle add chain=prerouting connection-mark=$connmark src-address-list=clients \
         action=mark-routing new-routing-mark=$rtmark passthrough=yes
 
-    /ip route add dst-address=0.0.0.0/0 gateway=$pppoeName routing-table=$rtmark check-gateway=ping
+    /ip route add dst-address=0.0.0.0/0 gateway=$pppoeName routing-table=$rtmark
+    /ip route add dst-address=0.0.0.0/0 gateway=$pppoeName routing-table=main distance=$i
 }
 
 # WAN Accept Rule (for load balancing return traffic)
@@ -76,3 +77,6 @@
 :delay 2
 :local scriptFileName "auto-pcc.rsc"
 /file remove [find name=$scriptFileName]
+:delay 3
+:local scriptFileName2 "auto-pcc-installer.rsc"
+/file remove [find name=$scriptFileName2]
