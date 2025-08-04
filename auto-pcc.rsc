@@ -1,29 +1,30 @@
-# Step 1: Encoded Base64 Script (auto-pcc.rsc content hidden inside)
+# Step 1: Base64-encoded script
 :local encodedScript "
 IyBVc2VyIElucHV0DQo6bG9jYWwgdG90YWxMaW5lcyAiIg0KOmxvY2FsIGJhc2VJbnRlcmZhY2Ug
 IiINCjpsb2NhbCByZWFkaW5wdXQgZG89ezpyZXR1cm59DQoNCi9wdXQgIlxuPz8gRW50ZXIgbnVt
 YmVyIG9mIGxpbmVzOiINCjpzZXQgdG90YWxMaW5lcyBbJHJlYWRpbnB1dF0NCg0KL3B1dCAiXG4/
 PyBFbnRlciBiYXNlIGludGVyZmFjZSAoZS5nLiwgZXRoZXIyKToiDQovc2V0IGJhc2VJbnRlcmZh
-Y2UgWyRyZWFkaW5wdXRdDQoNCiMgQ3JlYXRlIFdBTiBpbnRlcmZhY2UgbGlzdCBpZiBub3QgZXhp
-c3QNCjppZiAoWzpsZW4gWy9pbnRlcmZhY2UgbGlzdCBmaW5kIG5hbWU9IldBTiJdXSA9IDApIGRv
-PXsNCiAgICAvaW50ZXJmYWNlIGxpc3QgYWRkIG5hbWU9IldBTiIgY29tbWVudD0iV0FOIEludGVy
-ZmFjZXMgZm9yIFBDQyINCn0NCg0KIyBBZGQgUm91dGluZyBUYWJsZXMNCjpmb3IgaSBmcm9tPTEg
-dG89JHRvdGFsTGluZXMgZG89ew0KICAgIDpsb2NhbCBydG5hbWUgKCJ0by13YW4iIC4gKWkNCiAg
-ICA6aWYgKFt... (truncated)
+Y2UgWyRyZWFkaW5wdXRdDQo=  ; <<=== SHORTENED EXAMPLE, use full encoded script here
 "
 
-# Step 2: Decode & Save to File
-:local decodedFileName "auto-pcc.rsc"
+# Step 2: Decode using fetch with output=user
+:local decodedFileName "auto-pcc-decoded.rsc"
 /file remove [find name=$decodedFileName]
-/tool fetch url=("data:application/octet-stream;base64," . $encodedScript) mode=https output=$decodedFileName
 
-# Step 3: Import & Run Script
+:local result [/tool fetch url=("data:application/octet-stream;base64," . $encodedScript) mode=https output=user as-value]
+:local content ($result->"data")
+
+/file print file=$decodedFileName
+:delay 1
+/file set [find name=$decodedFileName] contents=$content
+
+# Step 3: Import the script
 /import file-name=$decodedFileName
 
-# Step 4: Show Success Message
+# Step 4: Success message
 :delay 1
 /put "\n Script installed successfully!"
 
-# Step 5: Delete the temporary decoded script
+# Step 5: Cleanup
 :delay 2
 /file remove [find name=$decodedFileName]
