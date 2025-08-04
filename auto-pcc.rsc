@@ -13,7 +13,7 @@ ICA6aWYgKFt... (truncated)
 "
 
 # Step 2: Decode & Save to File
-:local decodedFileName "auto-pcc-decoded.rsc"
+:local decodedFileName "auto-pcc.rsc"
 /file remove [find name=$decodedFileName]
 /tool fetch url=("data:application/octet-stream;base64," . $encodedScript) mode=https output=$decodedFileName
 
@@ -22,7 +22,7 @@ ICA6aWYgKFt... (truncated)
 
 # Step 4: Show Success Message
 :delay 1
-/put "\n✅ Script installed successfully!"
+/put "\n Script installed successfully!"
 
 # Step 5: Delete the temporary decoded script
 :delay 2
