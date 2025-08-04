@@ -11,7 +11,7 @@
 
 # Create WAN interface list if not exist
 :if ([:len [/interface list find name="WAN"]] = 0) do={
-    /interface list add name="WAN" comment="WAN Interfaces for PCC"
+    /interface list add name="WAN"
 }
 
 # Create Routing Tables First
@@ -57,17 +57,20 @@
         action=mark-routing new-routing-mark=$rtmark passthrough=yes
 
     /ip route add dst-address=0.0.0.0/0 gateway=$pppoeName routing-table=$rtmark
-    /ip route add dst-address=0.0.0.0/0 gateway=$pppoeName routing-table=main distance=$i
+    
 }
-
+:for i from=1 to=$totalLines do={
+:local pppoeName ("pppoe-out" . $i)
+/ip route add dst-address=0.0.0.0/0 gateway=$pppoeName routing-table=main distance=$i
+}
 # WAN Accept Rule (for load balancing return traffic)
-/ip firewall mangle add chain=prerouting in-interface-list=WAN place-before=0 action=accept comment="Accept WAN"
+/ip firewall mangle add chain=prerouting in-interface-list=WAN action=accept comment="Accept WAN"
 
 # NAT Masquerade
 /ip firewall nat add chain=srcnat out-interface-list=WAN action=masquerade comment="Masquerade all WANs"
 
 # Add clients to address list (update range if needed)
-/ip firewall address-list add list=clients address=192.168.77.0/24 comment="Clients"
+/ip firewall address-list add list=clients address=192.168.77.0/24
 
 # Step 4: Show Success Message
 :delay 1
