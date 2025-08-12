@@ -31,7 +31,7 @@
     :local password ("password" . $i)
 
     /interface macvlan add name=$vlanName interface=$baseInterface mode=private
-    /interface pppoe-client add name=$pppoeName interface=$vlanName user=$username password=$password use-peer-dns=no add-default-route=no disabled=no
+    /interface pppoe-client add name=$pppoeName interface=$vlanName user=$username password=$password profile=default-encryption use-peer-dns=no add-default-route=no disabled=no
     /interface list member add list=WAN interface=$pppoeName
 }
 
