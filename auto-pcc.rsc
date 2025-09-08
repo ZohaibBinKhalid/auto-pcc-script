@@ -74,7 +74,15 @@
 
 # Step 4: Show Success Message
 :delay 1
-/put "\n? Successfully installed auto PCC script!"
+:put "************************************************"
+:put "*                                              *"
+:put "*    Successfully Installed Auto PCC Script!   *"
+:put "*                                              *"
+:put "*    Thank you for using my script           *"
+:put "*    Script by: Zohaib Bin Khalid            *"
+:put "*                                              *"
+:put "************************************************"
+
 
 # Step 5: Delete script file after execution
 :delay 2
