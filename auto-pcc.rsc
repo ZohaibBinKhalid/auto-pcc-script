@@ -78,8 +78,8 @@
 :put "*                                              *"
 :put "*    Successfully Installed Auto PCC Script!   *"
 :put "*                                              *"
-:put "*    Thank you for using my script           *"
-:put "*    Script by: Zohaib Bin Khalid            *"
+:put "*    Thank you for using my script             *"
+:put "*    Script by: Zohaib Bin Khalid              *"
 :put "*                                              *"
 :put "************************************************"
 
