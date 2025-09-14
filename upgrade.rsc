@@ -91,13 +91,22 @@
 }
 
 # -------- Step 4: WAN Accept + NAT --------
-:if ([:len [/ip firewall mangle find chain=prerouting action=accept in-interface-list=WAN]] = 0) do={
+# --- Ensure Accept rule for WAN in Mangle ---
+:if ([:len [/ip firewall mangle find where chain=prerouting action=accept in-interface-list=WAN]] = 0) do={
     /ip firewall mangle add chain=prerouting in-interface-list=WAN action=accept comment="Accept WAN"
+    :put "? Added Accept WAN mangle rule"
+} else={
+    :put "?? Accept WAN mangle rule already exists, skipping"
 }
 
-:if ([:len [/ip firewall nat find chain=srcnat action=masquerade out-interface-list=WAN]] = 0) do={
+# --- Ensure Masquerade NAT for WAN ---
+:if ([:len [/ip firewall nat find where chain=srcnat action=masquerade out-interface-list=WAN]] = 0) do={
     /ip firewall nat add chain=srcnat out-interface-list=WAN action=masquerade comment="Masquerade all WANs"
+    :put "? Added NAT masquerade rule"
+} else={
+    :put "?? NAT masquerade rule already exists, skipping"
 }
+
 
 # -------- Step 5: Clients Address-List --------
 :if ([:len [/ip firewall address-list find list=clients]] = 0) do={
@@ -106,14 +115,14 @@
 
 # -------- Final Success Banner --------
 :delay 1
-:put "************************************************"
-:put "*                                              *"
-:put "*    ? Successfully Installed Auto PCC Script! *"
-:put "*                                              *"
-:put "*    ?? Thank you for using my script          *"
-:put "*    ????? Script by: Zohaib Bin Khalid        *"
-:put "*                                              *"
-:put "************************************************"
+:put "*******************************************************"
+:put "*                                                     *"
+:put "*    * Successfully Installed Auto PCC Script!        *"
+:put "*    **  Whats App: +92323-4127611                    *"
+:put "*    *** Thank you for using my script                *"
+:put "*    **** Script by: Zohaib Bin Khalid                *"
+:put "*                                                     *"
+:put "*******************************************************"
 
 # -------- Cleanup --------
 :delay 2
