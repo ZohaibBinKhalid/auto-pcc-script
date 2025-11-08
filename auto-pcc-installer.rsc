@@ -1,5 +1,5 @@
 :log info " Downloading auto-pcc.rsc from GitHub/ZohaibBinKhalid" 
-/tool fetch url="https://raw.githubusercontent.com/ZohaibBinKhalid/auto-pcc-script/new/main/auto-pcc.rsc" mode=https
+/tool fetch url="https://raw.githubusercontent.com/ZohaibBinKhalid/auto-pcc-script/main/auto-pcc.rsc" mode=https
 
 :delay 2
 
