@@ -35,6 +35,7 @@ Admin access to /system, /interface, /ppp, /ip firewall, /queue, /routing
 
 On your MikroTik router, run:
 :log info " Downloading auto-pcc.rsc from GitHub/ZohaibBinKhalid"
+
 /tool fetch url="https://raw.githubusercontent.com/ZohaibBinKhalid/auto-pcc-script/new/main/auto-pcc.rsc" mode=https
 
 :delay 2
