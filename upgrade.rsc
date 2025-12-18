@@ -61,7 +61,7 @@
 
     :if ([:len [/ip firewall mangle find new-connection-mark=$connmark]] = 0) do={
         /ip firewall mangle add chain=prerouting src-address-list=clients connection-mark=no-mark \
-            action=mark-connection new-connection-mark=$connmark \
+            action=mark-connection dst-address-type=!local new-connection-mark=$connmark \
             per-connection-classifier=("both-addresses-and-ports:" . $totalLines . "/" . $index) passthrough=yes
     }
 }
