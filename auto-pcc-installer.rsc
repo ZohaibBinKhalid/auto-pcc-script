@@ -9,4 +9,6 @@
 
 :delay 3
 
-:log info " Cleaning up temporary file..." /file remove [find name="auto-pcc.rsc"] /file remove [find name="auto-pcc-installer.rsc"]
+:log info " Cleaning up temporary file..." /file remove [find name="auto-pcc.rsc"] 
+
+/file remove [find name="auto-pcc-installer.rsc"]
