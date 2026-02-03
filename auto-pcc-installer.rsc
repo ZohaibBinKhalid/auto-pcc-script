@@ -3,7 +3,9 @@
 
 :delay 2
 
-:log info " Importing the auto-pcc.rsc script..." /import file-name=auto-pcc.rsc
+:log info " Importing the auto-pcc.rsc script..." 
+
+/import file-name=auto-pcc.rsc
 
 :delay 3
 
